@@ -4,7 +4,7 @@ from flaskbb import create_app
 from flaskbb.configs.testing import TestingConfig as Config
 from flaskbb.extensions import db
 from flaskbb.utils.populate import create_default_groups, create_default_settings
-
+from flaskbb.utils.translations import compile_translations
 
 @pytest.fixture(autouse=True)
 def application():
@@ -57,6 +57,10 @@ def database():
 # CoRise TODO: add a new fixture `translations` that calls the
 # `compile_translations` function from flaskbb.utils.translations
 
-# ADD CODE HERE
+@pytest.fixture()
+def default_translations():
+    """load default translations"""
+    compile_translations()
+
 
 ###################################################################
