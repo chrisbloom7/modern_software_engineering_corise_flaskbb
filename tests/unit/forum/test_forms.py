@@ -1,4 +1,6 @@
 import pytest
+from flaskbb.forum import forms
+from werkzeug.datastructures import MultiDict
 
 pytestmark = pytest.mark.usefixtures("post_request_context", "default_settings")
 
@@ -7,7 +9,18 @@ pytestmark = pytest.mark.usefixtures("post_request_context", "default_settings")
 # the `SpecialTopicForm`
 
 class TestSpecialTopicForm(object):
-    # ADD CODE HERE
-    pass
+    def test_special_topic_title(self):
+        data = MultiDict({
+            "title": "Welcome", "content": "Hi!", "track_topic": False
+        })
+        form = forms.SpecialTopicForm(formdata=data)
+        assert form.data.get("title") == "Special Topic: Welcome"
+
+    def test_special_topic_content(self):
+        data = MultiDict({
+            "title": "Welcome", "content": "Hi!", "track_topic": False
+        })
+        form = forms.SpecialTopicForm(formdata=data)
+        assert form.data.get("content") == "Special Topic: Hi!"
 
 ###################################################################
