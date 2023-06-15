@@ -16,7 +16,7 @@ on:
       - '**/LICENSE'
 
 ###################################################################
-# CoRise TODO: fill in the steps to install dependencies, run tests 
+# CoRise TODO: fill in the steps to install dependencies, run tests
 # with pytest, and upload the code coverage report.
 
 jobs:
@@ -29,12 +29,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-        
+
     - name: Get pip cache dir
       id: pip-cache
       run: echo "::set-output name=dir::$(pip cache dir)"
@@ -46,19 +46,23 @@ jobs:
         key: pip|${{ runner.os }}|${{ matrix.python-version }}|${{ hashFiles('requirements*.txt') }}
 
     - name: Install dependencies
-        # Install all the dependencies
-        # TODO: ADD CODE HERE
+      # Install all the dependencies
+      run: |
+        pip install -r requirements-dev.txt && playwright install && playwright install-deps
 
     - name: Prepare FlaskBB
       run: |
         flaskbb translations compile
-        
+
     - name: Test with pytest
-        # Implement test step
-        # TODO: ADD CODE HERE
-        
+      # Implement test step
+      run: pytest tests/
+
     - name: Upload coverage
-        # Implement coverage step
-        # TODO: ADD CODE HERE
-      
+      uses: actions/upload-artifact@v3
+      # Implement coverage step
+      with:
+        name: coverage
+        path: tests/htmlcov/
+
 ###################################################################
