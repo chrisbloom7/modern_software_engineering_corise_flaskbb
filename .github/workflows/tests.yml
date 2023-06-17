@@ -58,7 +58,7 @@ jobs:
 
     - name: Test with pytest
       # Implement test step
-      run: pytest tests/
+      run: pytest tests/ --cov-report html
 
     - name: Upload coverage
       uses: actions/upload-artifact@v3
