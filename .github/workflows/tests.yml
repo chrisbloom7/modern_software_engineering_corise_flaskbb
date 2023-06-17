@@ -48,7 +48,10 @@ jobs:
     - name: Install dependencies
       # Install all the dependencies
       run: |
-        pip install -r requirements-dev.txt && playwright install && playwright install-deps
+        pip install -r requirements-dev.txt
+        pip install playwright --upgrade
+        playwright install
+        playwright install-deps
 
     - name: Prepare FlaskBB
       run: |

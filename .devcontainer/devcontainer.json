@@ -18,12 +18,12 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "/home/vscode/venv/bin/pip --disable-pip-version-check --no-cache-dir install -r requirements-dev.txt && /home/vscode/venv/bin/playwright install && /home/vscode/venv/bin/playwright install-deps",
+	"postCreateCommand": "/home/vscode/venv/bin/pip --disable-pip-version-check --no-cache-dir install -r requirements-dev.txt && /home/vscode/venv/bin/pip install playwright --upgrade && /home/vscode/venv/bin/playwright install && /home/vscode/venv/bin/playwright install-deps",
 
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
-			"settings": { 
+			"settings": {
 				"python.defaultInterpreterPath": "/home/vscode/venv/bin/python",
 				"python.linting.enabled": true,
 				"python.linting.pylintEnabled": true,
