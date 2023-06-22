@@ -29,7 +29,7 @@ from flaskbb.forum.models import (Category, Forum, ForumsRead, Post, Topic,
                                   TopicsRead)
 from flaskbb.markup import make_renderer
 from flaskbb.user.models import User
-from flaskbb.utils.helpers import (FlashAndRedirect, do_topic_action,
+from flaskbb.utils.helpers import (FlashAndRedirect,
                                    format_quote, get_online_users, real,
                                    register_view, render_template, time_diff,
                                    time_utcnow)
@@ -38,6 +38,7 @@ from flaskbb.utils.requirements import (CanAccessForum, CanDeletePost,
                                         CanPostReply, CanPostTopic, Has,
                                         IsAtleastModeratorInForum)
 from flaskbb.utils.settings import flaskbb_config
+from flaskbb.forum.topic_manager import TopicManager
 
 from .locals import current_category, current_forum, current_topic
 from .utils import force_login_if_needed
@@ -394,68 +395,48 @@ class ManageForum(MethodView):
         ids = request.form.getlist("rowid")
         tmp_topics = Topic.query.filter(Topic.id.in_(ids)).all()
 
-        if not len(tmp_topics) > 0:
+        if not Permission(IsAtleastModeratorInForum(forum=forum_instance)):
+            flash(
+                _("You do not have the permissions to execute this action."),
+                "danger",
+            )
+
+        elif not len(tmp_topics) > 0:
             flash(
                 _(
                     "In order to perform this action you have to select at "
                     "least one topic."
                 ), "danger"
             )
-            return redirect(mod_forum_url)
 
         # locking/unlocking
-        if "lock" in request.form:
-            changed = do_topic_action(
-                topics=tmp_topics,
-                user=real(current_user),
-                action="locked",
-                reverse=False
-            )
-
+        elif "lock" in request.form:
+            changed = TopicManager.lock(topics=tmp_topics)
             flash(_("%(count)s topics locked.", count=changed), "success")
-            return redirect(mod_forum_url)
 
         elif "unlock" in request.form:
-            changed = do_topic_action(
-                topics=tmp_topics,
-                user=real(current_user),
-                action="locked",
-                reverse=True
-            )
+            changed = TopicManager.unlock(topics=tmp_topics)
             flash(_("%(count)s topics unlocked.", count=changed), "success")
-            return redirect(mod_forum_url)
 
         # highlighting/trivializing
         elif "highlight" in request.form:
-            changed = do_topic_action(
-                topics=tmp_topics,
-                user=real(current_user),
-                action="important",
-                reverse=False
-            )
+            changed = TopicManager.highlight(topics=tmp_topics)
             flash(_("%(count)s topics highlighted.", count=changed), "success")
-            return redirect(mod_forum_url)
 
         elif "trivialize" in request.form:
-            changed = do_topic_action(
-                topics=tmp_topics,
-                user=real(current_user),
-                action="important",
-                reverse=True
-            )
+            changed = TopicManager.trivialize(topics=tmp_topics)
             flash(_("%(count)s topics trivialized.", count=changed), "success")
-            return redirect(mod_forum_url)
 
         # deleting
         elif "delete" in request.form:
-            changed = do_topic_action(
-                topics=tmp_topics,
-                user=real(current_user),
-                action="delete",
-                reverse=False
-            )
-            flash(_("%(count)s topics deleted.", count=changed), "success")
-            return redirect(mod_forum_url)
+            if not Permission(CanDeleteTopic):
+                flash(
+                    _("You do not have the permissions to delete these topics."),
+                    "danger",
+                )
+            else:
+                changed = TopicManager.delete(topics=tmp_topics)
+                flash(_("%(count)s topics deleted.", count=changed), "success")
 
         # moving
         elif "move" in request.form:
@@ -475,39 +456,36 @@ class ManageForum(MethodView):
                     _("You do not have the permissions to move this topic."),
                     "danger"
                 )
-                return redirect(mod_forum_url)
-
-            if new_forum.move_topics_to(tmp_topics):
+            elif new_forum.move_topics_to(tmp_topics):
                 flash(_("Topics moved."), "success")
             else:
                 flash(_("Failed to move topics."), "danger")
 
-            return redirect(mod_forum_url)
-
         # hiding/unhiding
         elif "hide" in request.form:
-            changed = do_topic_action(
-                topics=tmp_topics,
-                user=real(current_user),
-                action="hide",
-                reverse=False
-            )
-            flash(_("%(count)s topics hidden.", count=changed), "success")
-            return redirect(mod_forum_url)
+            if not Permission(Has("makehidden")):
+                flash(
+                    _("You do not have the permissions to hide these topics."),
+                    "danger",
+                )
+            else:
+                changed = TopicManager.hide(topics=tmp_topics, user=real(current_user))
+                flash(_("%(count)s topics hidden.", count=changed), "success")
 
         elif "unhide" in request.form:
-            changed = do_topic_action(
-                topics=tmp_topics,
-                user=real(current_user),
-                action="unhide",
-                reverse=False
-            )
-            flash(_("%(count)s topics unhidden.", count=changed), "success")
-            return redirect(mod_forum_url)
+            if not Permission(Has("makehidden")):
+                flash(
+                    _("You do not have the permissions to unhide these topics."),
+                    "danger",
+                )
+            else:
+                changed = TopicManager.unhide(topics=tmp_topics)
+                flash(_("%(count)s topics unhidden.", count=changed), "success")
 
         else:
             flash(_("Unknown action requested"), "danger")
-            return redirect(mod_forum_url)
+
+        return redirect(mod_forum_url)
 
 
 class NewPost(MethodView):
