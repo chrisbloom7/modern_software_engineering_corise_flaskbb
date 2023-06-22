@@ -15,6 +15,10 @@ on:
       - '**/AUTHORS'
       - '**/LICENSE'
   # CoRise TODO: modify this workflow to run on each pull request
+  pull_request:
+    types:
+      - opened
+      - reopened
 
 jobs:
   build:
@@ -26,12 +30,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        
+
     - name: Get pip cache dir
       id: pip-cache
       run: echo "::set-output name=dir::$(pip cache dir)"
@@ -54,13 +58,13 @@ jobs:
     - name: Prepare FlaskBB
       run: |
         flaskbb translations compile
-    
+
     # CoRise TODO: add another job to the workflow that will run flake8 and report any errors that were introduced in the proposed change
-        
+
     - name: Test with pytest
       run: |
         pytest --cov=./ --cov-report=html
-        
+
     - name: Upload code coverage results
       uses: actions/upload-artifact@v3
       with:
