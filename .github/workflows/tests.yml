@@ -60,6 +60,13 @@ jobs:
         flaskbb translations compile
 
     # CoRise TODO: add another job to the workflow that will run flake8 and report any errors that were introduced in the proposed change
+    - name: flake8
+      run: |
+        flake8 --select=E9,F7,F63,F82 flaskbb/
+
+    - name: flake8 report
+      run: |
+        flake8 --exit-zero --statistics flaskbb/
 
     - name: Test with pytest
       run: |
