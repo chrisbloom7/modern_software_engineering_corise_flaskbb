@@ -9,7 +9,6 @@ on:
             - 'terraform/*'
             - '.github/workflows/terraform.yaml'
     pull_request:
-        branches: [ main ]
         paths:
             - 'terraform/*'
             - '.github/workflows/terraform.yaml'
@@ -19,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     name: Format
-    
+
     steps:
       # Clone the repository.
       - uses: actions/checkout@v2
@@ -29,7 +28,37 @@ jobs:
       # Download & set up the terraform CLI.
       - name: Set up terraform CLI
         uses: hashicorp/setup-terraform@v1
-        # CoRise TODO: run the format command fail the build or on pull-requests update the PR with formatted data
+      - name: Format Check
+        working-directory: ./terraform
+        id: fmt
+        run: terraform fmt -check
+        # continue-on-error: true
+      - name: Annotate Formatting Errors
+        uses: actions/github-script@v6
+        if: steps.fmt.outcome != 'success' && github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+
+            Fix the format in the following files:
+
+            \`\`\`\n
+            ${{ steps.fmt.outputs.stdout }}
+            \`\`\``;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+      - name: pass or fail
+        if: steps.fmt.outcome != 'success'
+        uses: actions/github-script@v6
+        with:
+          script: core.setFailed('Terraform format check failed')
+
   terraform:
 
     runs-on: ubuntu-latest
@@ -38,7 +67,7 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.TERRAFORM_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.TERRAFORM_AWS_SECRET_ACCESS_KEY }}
-    
+
     steps:
       - uses: actions/checkout@v2
       # Download & set up the terraform CLI.
@@ -49,20 +78,24 @@ jobs:
         working-directory: ./terraform
         id: init
         run: terraform init -input=false
-      # CoRise TODO: Validate the terraform plan (if on a PR branch).
       - name: terraform validate
         working-directory: ./terraform
-      # CoRise TODO: Prepare the terraform plan (if on a PR branch).
+        if: github.event_name == 'pull_request'
+        id: validate
+        run: terraform validate -no-color
       - name: terraform plan
         working-directory: ./terraform
-      # CoRise TODO: Fail the job if the plan failed
+        if: github.event_name == 'pull_request'
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: true
       - name: pass or fail
+        if: steps.validate.outcome != 'success' || steps.plan.outcome != 'success'
         uses: actions/github-script@v6
-      # CoRise TODO: Apply the generated plan (after merging).
+        with:
+          script: core.setFailed('Terraform was invalid or the plan failed')
       - name: terraform apply
-        id: apply
         working-directory: ./terraform
-
-
-
-
+        if: github.event_name == 'push'
+        id: apply
+        run: terraform apply -auto-approve
