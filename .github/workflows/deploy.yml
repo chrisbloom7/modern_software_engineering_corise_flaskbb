@@ -16,7 +16,7 @@ jobs:
       - name: Download latest build
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.FLASKBB_APPLICATION_ARTIFACT_NAME }}
+          name: "${{ env.FLASKBB_APPLICATION_ARTIFACT_NAME }}"
 
       - name: Congifure AWS Credentials
         uses: aws-actions/configure-aws-credentials
