@@ -89,5 +89,5 @@ jobs:
       - name: Upload application artifact
         uses: actions/upload-artifact@v3
         with:
-          name: chrisbloom7_flaskbb_application_artifact
+          name: ${{ env.FLASKBB_APPLICATION_ARTIFACT_NAME }}
           path: flaskbb_deploy-${{ github.sha }}.zip

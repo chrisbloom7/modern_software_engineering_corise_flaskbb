@@ -16,7 +16,7 @@ jobs:
       - name: Download latest build
         uses: actions/download-artifact@v3
         with:
-          name: chrisbloom7_flaskbb_application_artifact
+          name: ${{ env.FLASKBB_APPLICATION_ARTIFACT_NAME }}
 
       - name: Congifure AWS Credentials
         uses: aws-actions/configure-aws-credentials
@@ -26,13 +26,13 @@ jobs:
           aws-region: "us-east-1"
 
       - name: Upload application file to AWS
-        run: aws s3 cp flaskbb_deploy-${{ github.sha }}.zip s3://flaskbb-corise-chrisbloom7
+        run: aws s3 cp flaskbb_deploy-${{ github.sha }}.zip s3://${{ env.DEPLOY_S3_BUCKET_NAME }}
 
       - name: Create new application version
         run: |
           aws elasticbeanstalk create-application-version \
-          --application-name your_application_name \
-          --source-bundle S3Bucket="flaskbb-corise-chrisbloom7",S3Key="flaskbb_deploy-${{ github.sha }}.zip" \
+          --application-name flaskbb \
+          --source-bundle S3Bucket="${{ env.DEPLOY_S3_BUCKET_NAME }}",S3Key="flaskbb_deploy-${{ github.sha }}.zip" \
           --version-label "ver-${{ github.sha }}" \
           --description "Application build @ ${{ github.sha }}"
 
