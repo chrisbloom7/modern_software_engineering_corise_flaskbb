@@ -53,8 +53,9 @@ jobs:
             })
 
             // 2. Prepare format of the comment
+            let output;
             if (FORMAT_FAILURE) {
-              const output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+              output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
 
               Fix the format in the following files:
 
@@ -62,7 +63,7 @@ jobs:
               ${{ steps.fmt.outputs.stdout }}
               \`\`\``;
             } else {
-              const output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+              output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
 
               Format has been fixed!`;
             }
