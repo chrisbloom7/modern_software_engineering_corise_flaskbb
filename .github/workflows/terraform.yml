@@ -52,6 +52,11 @@ jobs:
               repo: context.repo.repo,
               body: output
             })
+      - name: pass or fail
+        if: ${{ steps.fmt.outcome != 'success' }}
+        uses: actions/github-script@v6
+        with:
+          script: core.setFailed('Terraform format check failed!')
 
   terraform:
     runs-on: ubuntu-latest
