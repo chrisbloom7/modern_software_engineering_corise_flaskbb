@@ -59,7 +59,7 @@ jobs:
 
               Fix the format in the following files:
 
-              \`\`\`\n
+              \`\`\`
               ${{ steps.fmt.outputs.stdout }}
               \`\`\``;
             } else {
