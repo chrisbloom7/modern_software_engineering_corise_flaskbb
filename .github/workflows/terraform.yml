@@ -35,16 +35,12 @@ jobs:
       - name: Annotate Formatting Errors
         uses: actions/github-script@v6
         if: ${{ github.event_name == 'pull_request' }}
+        env:
+          FORMAT_FAILURE: ${{ steps.fmt.outcome != 'success' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const failure = ${
-              if (steps.fmt.outcome != 'success') {
-                'true'
-              } else {
-                'false'
-              }
-            };
+            const { FORMAT_FAILURE } = process.env
 
             // 1. Retrieve existing bot comments for the PR
             const { data: comments } = await github.rest.issues.listComments({
@@ -57,7 +53,7 @@ jobs:
             })
 
             // 2. Prepare format of the comment
-            if (failure) {
+            if (FORMAT_FAILURE) {
               const output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
 
               Fix the format in the following files:
@@ -79,7 +75,7 @@ jobs:
                 comment_id: botComment.id,
                 body: output
               })
-            } else if (failure) {
+            } else if (FORMAT_FAILURE) {
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
