@@ -34,24 +34,59 @@ jobs:
         continue-on-error: ${{ github.event_name == 'pull_request' }}
       - name: Annotate Formatting Errors
         uses: actions/github-script@v6
-        if: ${{ steps.fmt.outcome != 'success' && github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+            const failure = ${
+              if (steps.fmt.outcome != 'success') {
+                'true'
+              } else {
+                'false'
+              }
+            };
 
-            Fix the format in the following files:
-
-            \`\`\`\n
-            ${{ steps.fmt.outputs.stdout }}
-            \`\`\``;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            // 1. Retrieve existing bot comments for the PR
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: output
+              issue_number: context.issue.number,
             })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
+            })
+
+            // 2. Prepare format of the comment
+            if (failure) {
+              const output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+
+              Fix the format in the following files:
+
+              \`\`\`\n
+              ${{ steps.fmt.outputs.stdout }}
+              \`\`\``;
+            } else {
+              const output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+
+              Format has been fixed!`;
+            }
+
+            // 3. If we have a comment, update it, otherwise create a new one
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else if (failure) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
       - name: pass or fail
         if: ${{ steps.fmt.outcome != 'success' }}
         uses: actions/github-script@v6
