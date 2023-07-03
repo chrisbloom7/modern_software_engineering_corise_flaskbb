@@ -36,11 +36,12 @@ jobs:
         uses: actions/github-script@v6
         if: ${{ github.event_name == 'pull_request' }}
         env:
-          FORMAT_FAILURE: ${{ steps.fmt.outcome != 'success' }}
+          FORMAT_OUTCOME: ${{ steps.fmt.outcome }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { FORMAT_FAILURE } = process.env
+            const { FORMAT_OUTCOME } = process.env
+            const format_failed = (FORMAT_OUTCOME != 'success')
 
             // 1. Retrieve existing bot comments for the PR
             const { data: comments } = await github.rest.issues.listComments({
@@ -54,7 +55,7 @@ jobs:
 
             // 2. Prepare format of the comment
             let output;
-            if (FORMAT_FAILURE) {
+            if (format_failed) {
               output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
 
               Fix the format in the following files:
