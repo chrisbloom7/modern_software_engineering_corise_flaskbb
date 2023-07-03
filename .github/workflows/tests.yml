@@ -17,7 +17,6 @@ on:
       - "terraform/**"
       - .github/workflows/terraform.yml
   pull_request:
-    branches: [main]
     paths-ignore:
       - "docs/**"
       - "flaskbb/themes/**"
